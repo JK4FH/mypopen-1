@@ -29,6 +29,7 @@ script:
   - cd build
   - cmake -DCMAKE_BUILD_TYPE=Debug ..
   - cmake --build .
+  - ./mypopen
   # coverage
   - if [ "$CC" == "gcc-5" ]; then gcov-5 CMakeFiles/*/*.o; fi
 

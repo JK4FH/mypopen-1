@@ -3,14 +3,22 @@ find_package(Doxygen)
 
 project(mypopen)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99 -Wall -Wextra -Wstrict-prototypes -pedantic")
-
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu11 -Wall -Wextra -Wstrict-prototypes -pedantic")
 set(CMAKE_C_FLAGS_DEBUG "-g -O0 -fprofile-arcs -ftest-coverage")
-
 set(CMAKE_EXE_LINKER_FLAGS="-fprofile-arcs -ftest-coverage")
 
-set(SOURCE_FILES src/mypopen.c src/mypopen.h tests/utils.h tests/utils.c tests/test-pipe.c)
-add_executable(${CMAKE_PROJECT_NAME} ${SOURCE_FILES})
+add_executable(killparent tests/libpopentest/killparent.c)
+target_link_libraries(killparent LIBPOPENUTILS)
+
+add_executable(checkopenfds tests/libpopentest/checkopenfds.c)
+target_link_libraries(checkopenfds LIBPOPENUTILS)
+
+set(MYPOPEN src/mypopen.c src/mypopen.h)
+add_library(LIBPOPENUTILS tests/libpopentest/utils.c tests/libpopentest/utils.h)
+add_library(LIBPOPENTEST tests/libpopentest/popentest.c tests/libpopentest/mypopen.h tests/libpopentest/doxygen-data.h)
+
+add_executable(${CMAKE_PROJECT_NAME} ${MYPOPEN})
+target_link_libraries(${CMAKE_PROJECT_NAME} LIBPOPENTEST LIBPOPENUTILS)
 
 if(DOXYGEN_FOUND)
     add_custom_target(doc

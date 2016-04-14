@@ -4,8 +4,8 @@ static FILE *global_stream = NULL;
 static pid_t pid = -1;
 
 FILE *mypopen(const char *command, const char *type) {
-  int parent, child;
   int pipe_ends[2];
+  int parent, child;
 
   /* check if already open */
   if (global_stream != NULL) {
@@ -13,21 +13,20 @@ FILE *mypopen(const char *command, const char *type) {
     return NULL;
   }
 
+  /* the command must not be empty */
   if (command == NULL) {
     errno = EINVAL;
     return NULL;
   }
 
-  switch (*type) {
-  case 'r':
+  /* only two types are allowed: r and w */
+  if (strcmp(type, "r") == 0) {
     parent = READ;
     child = WRITE;
-    break;
-  case 'w':
+  } else if (strcmp(type, "w") == 0) {
     parent = WRITE;
     child = READ;
-    break;
-  default:
+  } else {
     errno = EINVAL;
     return NULL;
   }
@@ -48,13 +47,13 @@ FILE *mypopen(const char *command, const char *type) {
     if (pipe_ends[child] != child) {
       if (dup2(pipe_ends[child], child) == -1) {
         close(pipe_ends[child]);
-        _exit(127);
+        exit(EXIT_FAILURE);
       }
       close(pipe_ends[child]);
     }
     execl("/bin/sh", "sh", "-c", command, NULL);
     /* reached only if execl failed */
-    _exit(127);
+    exit(EXIT_FAILURE);
   /* parent */
   default:
     close(pipe_ends[child]);
@@ -70,11 +69,13 @@ FILE *mypopen(const char *command, const char *type) {
 int mypclose(FILE *stream) {
   int status;
 
+  /* check if mypopen was run */
   if (global_stream == NULL) {
     errno = ECHILD;
     return -1;
   }
 
+  /* check if we are closing the correct stream */
   if (global_stream != stream) {
     errno = EINVAL;
     return -1;
@@ -94,7 +95,7 @@ int mypclose(FILE *stream) {
   pid = -1;
   global_stream = NULL;
 
-  if (WIFEXITED(status)) {
+  if (WIFEXITED(status) != 0) {
     return WEXITSTATUS(status);
   }
 

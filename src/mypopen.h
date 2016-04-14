@@ -5,6 +5,8 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <errno.h>
+#include <string.h>
+#include <stdlib.h>
 
 #define READ 0
 #define WRITE 1
