@@ -1,12 +1,12 @@
 #include "mypopen.h"
 
 /**
- * a global variable containing process id returned by fork
+ * a global variable containing the process id returned by fork
  */
 static pid_t pid = -1;
 
 /**
- * a global variable containing a pointer of a pipe stream initiated by mypopen
+ * a global variable containing the pipe stream pointer initiated by mypopen
  */
 static FILE *global_stream = NULL;
 
@@ -48,6 +48,7 @@ FILE *mypopen(const char *command, const char *type) {
 
   /* create a pipe */
   if (pipe(pipe_ends) == -1) {
+    /* errno is set by pipe */
     return NULL;
   }
 
@@ -57,6 +58,7 @@ FILE *mypopen(const char *command, const char *type) {
   case -1:
     close(pipe_ends[parent]);
     close(pipe_ends[child]);
+    /* errno is set by fork */
     return NULL;
   /* child */
   case 0:
@@ -64,6 +66,7 @@ FILE *mypopen(const char *command, const char *type) {
     if (pipe_ends[child] != child) {
       if (dup2(pipe_ends[child], child) == -1) {
         close(pipe_ends[child]);
+        /* errno is set by dup2 */
         exit(EXIT_FAILURE);
       }
       close(pipe_ends[child]);
@@ -76,6 +79,7 @@ FILE *mypopen(const char *command, const char *type) {
     close(pipe_ends[child]);
     if ((global_stream = fdopen(pipe_ends[parent], type)) == NULL) {
       close(pipe_ends[parent]);
+      /* errno is set by fdopen */
       return NULL;
     }
   }
@@ -110,25 +114,26 @@ int mypclose(FILE *stream) {
   if (fclose(stream) == EOF) {
     pid = -1;
     global_stream = NULL;
-    errno = ECHILD;
+    /* errno is set by fclose */
     return -1;
   }
 
-  /* wait for a child process to terminate */
+  /* wait for the child process to terminate */
   while ((wait_pid = waitpid(pid, &status, 0)) != pid) {
     if (wait_pid == -1) {
       if (errno == EINTR) {
         continue;
       }
-    }
 
-    /* reached only if waitpid returned an unexpected value or errno */
-    pid = -1;
-    global_stream = NULL;
-    errno = ECHILD;
-    return -1;
+      /* reached only in case of error */
+      pid = -1;
+      global_stream = NULL;
+      /* errno is set by waitpid */
+      return -1;
+    }
   }
 
+  /* reset the global variables */
   pid = -1;
   global_stream = NULL;
 
@@ -137,6 +142,7 @@ int mypclose(FILE *stream) {
     return WEXITSTATUS(status);
   }
 
+  /* reached only if the process did not terminate normally */
   errno = ECHILD;
   return -1;
 }

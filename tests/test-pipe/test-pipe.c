@@ -86,7 +86,7 @@
 #include <errno.h>
 
 #include "utils.h"
-#include "../src/mypopen.h"
+#include "../../src/mypopen.h"
 
 /*
  * --------------------------------------------------------------- defines --
