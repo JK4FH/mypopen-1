@@ -35,7 +35,7 @@ script:
 
 after_success:
   - if [ "$CC" == "gcc-5" ]; then bash <(curl -s https://codecov.io/bash); fi
-  # cleanup
+  # cleanup (we have to build again for coverity)
   - cd $TRAVIS_BUILD_DIR
   - rm -rf build
   # coverity

@@ -34,14 +34,23 @@ FILE *mypopen(const char *command, const char *type) {
     return NULL;
   }
 
-  /* check the type input */
-  if (strcmp(type, "r") == 0) {
-    parent = READ;
-    child = WRITE;
-  } else if (strcmp(type, "w") == 0) {
-    parent = WRITE;
-    child = READ;
-  } else {
+  /* check the type inout length */
+  if (type[1] != '\0') {
+    errno = EINVAL;
+    return NULL;
+  }
+
+  /* process the type input */
+  switch (type[0]) {
+  case 'r':
+    parent = STDIN_FILENO;
+    child = STDOUT_FILENO;
+    break;
+  case 'w':
+    parent = STDOUT_FILENO;
+    child = STDIN_FILENO;
+    break;
+  default:
     errno = EINVAL;
     return NULL;
   }
@@ -66,14 +75,13 @@ FILE *mypopen(const char *command, const char *type) {
     if (pipe_ends[child] != child) {
       if (dup2(pipe_ends[child], child) == -1) {
         close(pipe_ends[child]);
-        /* errno is set by dup2 */
-        exit(EXIT_FAILURE);
+        _exit(1); /* catchall for general errors */
       }
       close(pipe_ends[child]);
     }
     execl("/bin/sh", "sh", "-c", command, NULL);
     /* reached only if execl failed */
-    exit(EXIT_FAILURE);
+    _exit(127); /* command not found */
   /* parent */
   default:
     close(pipe_ends[child]);
@@ -124,7 +132,6 @@ int mypclose(FILE *stream) {
       if (errno == EINTR) {
         continue;
       }
-
       /* reached only in case of error */
       pid = -1;
       global_stream = NULL;

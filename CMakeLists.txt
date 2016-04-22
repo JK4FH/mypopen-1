@@ -22,6 +22,9 @@ target_link_libraries(libpopentest MYPOPEN LIBPOPENUTILS)
 add_executable(test-pipe tests/test-pipe/test-pipe.c)
 target_link_libraries(test-pipe MYPOPEN LIBPOPENUTILS)
 
+add_executable(sandbox tests/sandbox/sandbox.c)
+target_link_libraries(sandbox MYPOPEN)
+
 if(DOXYGEN_FOUND)
     add_custom_target(doc
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
